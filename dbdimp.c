@@ -4060,9 +4060,17 @@ int dbd_describe(SV* sth, imp_sth_t* imp_sth)
         // https://jira.mariadb.org/browse/MDEV-18143
         buffer->buffer_length= fields[i].max_length ? fields[i].max_length : 2;
 #elif MYSQL_VERSION_ID > 100312
+#if MYSQL_VERSION_ID > 101105
+        if (buffer->buffer_type != MYSQL_TYPE_BLOB) {
+#endif
         // https://jira.mariadb.org/browse/MDEV-18823
         buffer->buffer_length= fields[i].max_length ? fields[i].max_length + 1 : 2;
         buffer->buffer_length= fields[i].length > fields[i].max_length ? fields[i].length + 1 : 2;
+#if MYSQL_VERSION_ID > 101105
+        } else {
+          buffer->buffer_length= fields[i].max_length ? fields[i].max_length : 1;
+        }
+#endif
 #else
         buffer->buffer_length= fields[i].max_length ? fields[i].max_length : 1;
 #endif
