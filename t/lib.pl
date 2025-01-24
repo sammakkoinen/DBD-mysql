@@ -163,4 +163,14 @@ sub MinimumVersion {
     return;
 }
 
+sub MariaDBVersion {
+    my $dbh = shift;
+
+    # 5.5.5-10.11.6-MariaDB-2
+    if ($dbh->{mysql_serverinfo} =~ /(\d+)\.(\d+)\.(\d+)-MariaDB/) {
+        return int(sprintf '%02d%02d%02d', $1, $2, $3);
+    }
+    return;
+}
+
 1;

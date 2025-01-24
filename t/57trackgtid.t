@@ -17,7 +17,7 @@ if ($@) {
         "no database connection";
 }
 
-if ($dbh->{mysql_serverversion} > 100000) {
+if (MariaDBVersion($dbh)) {
     plan skip_all => "GTID tracking is not available on MariaDB";
 }
 

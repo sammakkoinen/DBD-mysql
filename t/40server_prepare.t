@@ -84,17 +84,20 @@ ok($sth3->execute(1, 2), "insert t3");
 is_deeply($dbh->selectall_arrayref('SELECT id, mydata FROM t3'), [[1, 2]]);
 
 my $dbname = $dbh->selectrow_arrayref("SELECT DATABASE()")->[0];
+# MariaDB server since version 10.6.2 can prepare all statements except PREPARE, EXECUTE, and DEALLOCATE / DROP PREPARE. Previous MariaDB and MySQL versions cannot prepare USE statement.
+my $mariadb_version = MariaDBVersion($dbh);
+my $non_preparable_statement = ($mariadb_version && $mariadb_version >= 100602) ? q(PREPARE stmt FROM "SELECT 1") : ("USE " . $dbh->quote_identifier($dbname));
 
 $dbh->{mysql_server_prepare_disable_fallback} = 1;
 my $error_handler_called = 0;
 $dbh->{HandleError} = sub { $error_handler_called = 1; die $_[0]; };
-eval { $dbh->prepare("USE $dbname") };
+eval { $dbh->prepare($non_preparable_statement); };
 $dbh->{HandleError} = undef;
-ok($error_handler_called, 'USE is not supported with mysql_server_prepare_disable_fallback=1');
+ok($error_handler_called, "Non-preparable statement '$non_preparable_statement' is not supported with mariadb_server_prepare_disable_fallback=1");
 
 $dbh->{mysql_server_prepare_disable_fallback} = 0;
 my $sth4;
-ok($sth4 = $dbh->prepare("USE $dbname"), 'USE is supported with mysql_server_prepare_disable_fallback=0');
+ok($sth4 = $dbh->prepare($non_preparable_statement), "Non-preparable statement '$non_preparable_statement' is supported with mariadb_server_prepare_disable_fallback=0");
 ok($sth4->execute());
 ok($sth4->finish());
 
